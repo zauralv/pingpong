@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Document</title>
+    <style>
+        #game {
+            margin: 50px auto;
+            box-shadow: 0 0 10px #333;
+            position: relative;
+        }
+
+        #game div {
+            position: absolute;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <script>
+        //const ball = document.getElementById("ball");
+        //const bar = document.getElementById("bar");
+        //const game = document.getElementById("game");
+
+
+        const ball = {
+            w: 30,
+            h: 30,
+            color: 'red',
+            x: 140,
+            y: 140,
+            vX: 10,
+            vY: 10,
+            move() {
+                if (ball.x < 0 || ball.x > 770) ball.vX *= -1
+                if (ball.y < 0 ||
+                    (ball.y > game.h - bar.y - bar.h - ball.h) &&
+                    (ball.x + ball.w / 2 > bar.x) &&
+                    (ball.x + ball.w / 2 < bar.x + bar.w)) ball.vY *= -1;
+                if (ball.y > 570) game.over();
+                bricks.arr.forEach(b => {
+                    if ((ball.x > b.x - (ball.w / 2)) &&
+                        (ball.x < b.x + b.w + (ball.w / 2)) &&
+                        (ball.y > b.y - ball.h) &&
+                        (ball.y < b.y + b.h) &&
+                        b.status) {
+                        ball.vY *= -1;
+                        b.status = false;
+                        b.elem.style.display = "none";
+                    }
+                })
+                let check = true;
+                bricks.arr.forEach(b => {
+                    if (b.elem.style.display != 'none')
+                        check = false
+                })
+                if (check) {
+                    win()
+
+                }
+                ball.y += ball.vY;
+                ball.x += ball.vX;
+                ball.show();
+            },
+
+            show(state = 0) {
+                if (state) {
+                    ball.elem = document.getElementById("ball");
+                    ball.elem.style.width = ball.w + "px";
+                    ball.elem.style.height = ball.h + "px";
+                    ball.elem.style.borderRadius = "50%";
+                    ball.elem.style.background = ball.color;
+                }
+
+                ball.elem.style.top = ball.y + "px";
+                ball.elem.style.left = ball.x + "px";
+            },
+
+            create() {
+                let div = document.createElement("div");
+                div.id = "ball";
+                game.elem.append(div);
+                this.show(1);
+            }
+        }
+
+        const bar = {
+            w: 150,
+            h: 10,
+            x: 0,
+            y: 5,
+            color: 'blue',
+            move(e) {
+                if (e.type == 'keydown') {
+                    if (e.keyCode == 37) bar.x -= 10;
+                    if (e.keyCode == 39) bar.x += 10;
+                }
+                else {
+                    bar.x = e.pageX - game.elem.offsetLeft - 75;
+                }
+                if (bar.x < 0) bar.x = 0;
+                if (bar.x > 650) bar.x = 650;
+                console.log(1);
+                bar.show();
+            },
+            show() {
+                bar.elem = document.getElementById("bar");
+                bar.elem.style.bottom = bar.y + "px";
+                bar.elem.style.left = bar.x + "px";
+                bar.elem.style.width = bar.w + "px";
+                bar.elem.style.height = bar.h + "px";
+                bar.elem.style.background = bar.color;
+            },
+            create() {
+                let div = document.createElement("div");
+                div.id = "bar";
+                game.elem.append(div);
+                this.show();
+            }
+
+        }
+
+        const game = {
+            w: 800,
+            h: 600,
+            color: '#fff',
+            show() {
+                this.elem = document.getElementById("game");
+                this.elem.style.width = this.w + "px";
+                this.elem.style.height = this.h + "px";
+                this.elem.style.background = this.color;
+            },
+            create() {
+                let div = document.createElement("div");
+                div.id = "game";
+                document.body.append(div);
+                this.show()
+            },
+            over() {
+                clearInterval(start);
+                // alert("game over!!!!!!!!");
+                $('#game').append('<div id="end">You Lost!</div>')
+                $('#end').append().css({
+                    boxShadow: 'none',
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: 'black',
+                    opacity: 0,
+                    textAlign: 'center',
+                    verticalAlign: 'middle',
+                    lineHeight: '600px',
+                    color: 'white',
+                    fontFamily: "\'Roboto\'",
+                    fontSize: '100px',
+                    zIndex: 200
+                })
+                $('#end').animate({ opacity: 0.8 }, 400)
+                document.getElementById("ball").style.display = "none";
+            }
+        }
+
+        const bricks = {
+            row: 1,
+            col: 5,
+            color: "deepskyblue",
+            gap: 10,
+            arr: [],
+            create() {
+                for (let i = 0; i < this.row; i++) {
+                    for (let j = 0; j < this.col; j++) {
+                        let brick = new function () {
+                            this.id = `b${i}${j}`;
+                            this.w = (game.w - bricks.gap * (bricks.col + 1)) / bricks.col;
+                            this.h = this.w / 5;
+                            this.x = (j + 1) * bricks.gap + j * this.w;
+                            this.y = (i + 1) * bricks.gap + i * this.h;
+                            this.color = bricks.color;
+                            this.status = true;
+                        }
+                        bricks.arr.push(brick);
+                        let div = document.createElement("div");
+                        div.id = `b${i}${j}`;
+                        game.elem.append(div);
+                    }
+                }
+                this.show();
+            },
+            show() {
+                for (let i = 0; i < this.col * this.row; i++) {
+                    let brick = this.arr[i];
+                    if (brick.status) {
+                        brick.elem = document.getElementById(brick.id);
+                        brick.elem.style.width = brick.w + "px";
+                        brick.elem.style.height = brick.h + "px";
+                        brick.elem.style.background = brick.color;
+                        brick.elem.style.left = brick.x + "px";
+                        brick.elem.style.top = brick.y + "px";
+                    }
+                }
+            }
+        }
+
+        function win() {
+            $('#game').append('<div id="end">You Won!</div>')
+            $('#end').append().css({
+                boxShadow: 'none',
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'black',
+                opacity: 0,
+                textAlign: 'center',
+                verticalAlign: 'middle',
+                lineHeight: '600px',
+                color: 'white',
+                fontFamily: "\'Roboto\'",
+                fontSize: '100px',
+                zIndex: 200
+            })
+            $('#end').animate({ opacity: 0.8 }, 400)
+            document.getElementById("ball").style.display = "none";
+           clearInterval(start)
+        }
+
+      
+
+        let start = setInterval(ball.move, 40);
+        game.create();
+        bar.create();
+        ball.create();
+        bricks.create();
+        game.show();
+        document.onkeydown = bar.move;
+        game.elem.onmousemove = bar.move;
+
+        // oyunu sona chatdirin!!!
+
+    </script>
+</body>
+
+</html>
